@@ -130,12 +130,6 @@ files/
 *.key
 *.crt
 
-# Docker
-.dockerignore
-Dockerfile
-docker-compose.yml
-docker-compose.override.yml
-
 # PM2
 ecosystem.config.js
 .pm2/
