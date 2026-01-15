@@ -138,8 +138,8 @@ ecosystem.config.js
 *.backup
 *.bak
 
-# Lock files
-package-lock.json
+# Lock files (package-lock.json НЕ игнорируем - нужен для npm ci в Docker)
+# package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
