@@ -395,3 +395,6 @@ sudo chown -R $USER:$USER /var/www/it-company/backend/uploads
 - Nginx: `sudo tail -f /var/log/nginx/error.log`
 - PostgreSQL: `sudo tail -f /var/log/postgresql/postgresql-*.log`
 
+
+
+

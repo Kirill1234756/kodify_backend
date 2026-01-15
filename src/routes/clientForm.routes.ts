@@ -23,19 +23,31 @@ router.post(
     antibotGuard,
     async (req: Request, res: Response) => {
         try {
-            // Extract form data
+            // Log incoming request for debugging
+            if (process.env.NODE_ENV === 'development') {
+                console.log('📥 Client form submission received')
+                console.log('   Body keys:', Object.keys(req.body))
+                console.log('   Body values:', JSON.stringify(req.body, null, 2))
+                console.log('   File:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'none')
+            }
+
+            // Extract and normalize form data
+            const rawPhone = String(req.body.phone || '').trim()
             const formData = {
-                companyDescription: req.body.companyDescription,
-                task: req.body.task,
-                solutionVision: req.body.solutionVision,
-                expectations: req.body.expectations,
-                budget: req.body.budget,
-                name: req.body.name,
-                company: req.body.company,
-                phone: normalizePhoneNumber(req.body.phone),
-                email: req.body.email,
-                privacyAccepted: req.body.privacyAccepted === 'true' || req.body.privacyAccepted === true,
-                attachedFile: (req as any).file // <-- каст
+                companyDescription: String(req.body.companyDescription || '').trim(),
+                task: String(req.body.task || '').trim(),
+                solutionVision: String(req.body.solutionVision || '').trim(),
+                expectations: String(req.body.expectations || '').trim(),
+                budget: String(req.body.budget || '').trim(),
+                name: String(req.body.name || '').trim(),
+                company: String(req.body.company || '').trim(),
+                phone: rawPhone ? normalizePhoneNumber(rawPhone) : rawPhone, // Only normalize if phone is not empty
+                email: String(req.body.email || '').trim(),
+                privacyAccepted: req.body.privacyAccepted === 'true' || req.body.privacyAccepted === true || req.body.privacyAccepted === '1',
+                attachedFile: (req as any).file,
+                // Include anti-bot fields for validation
+                honeypot: req.body.honeypot,
+                formStartedAt: req.body.formStartedAt ? Number(req.body.formStartedAt) : undefined
             }
 
             // Validate form data
@@ -51,11 +63,17 @@ router.post(
                     return acc
                 }, {})
 
+                // Log validation errors for debugging
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('❌ Validation errors:', errors)
+                    console.error('📥 Received data:', JSON.stringify(formData, null, 2))
+                }
+
                 return res.status(400).json({
                     success: false,
                     message: 'Ошибки валидации',
                     errors
-                }) // <-- явный return
+                })
             }
 
             // Save to database

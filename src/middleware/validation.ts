@@ -22,53 +22,59 @@ export const normalizePhoneNumber = (raw: string): string => {
 
 // Client form validation schema
 export const clientFormSchema = Joi.object({
-    companyDescription: Joi.string().min(10).max(2000).required().messages({
+    companyDescription: Joi.string().min(10).max(2000).optional().allow('').messages({
         'string.min': 'Описание компании должно содержать минимум 10 символов',
-        'string.max': 'Описание компании не должно превышать 2000 символов',
-        'any.required': 'Описание компании обязательно для заполнения'
+        'string.max': 'Описание компании не должно превышать 2000 символов'
     }),
-    task: Joi.string().min(10).max(1000).required().messages({
+    task: Joi.string().min(10).max(1000).optional().allow('').messages({
         'string.min': 'Задача должна содержать минимум 10 символов',
-        'string.max': 'Задача не должна превышать 1000 символов',
-        'any.required': 'Задача обязательна для заполнения'
+        'string.max': 'Задача не должна превышать 1000 символов'
     }),
-    solutionVision: Joi.string().min(10).max(1000).required().messages({
+    solutionVision: Joi.string().min(10).max(1000).optional().allow('').messages({
         'string.min': 'Видение решения должно содержать минимум 10 символов',
-        'string.max': 'Видение решения не должно превышать 1000 символов',
-        'any.required': 'Видение решения обязательно для заполнения'
+        'string.max': 'Видение решения не должно превышать 1000 символов'
     }),
-    expectations: Joi.string().min(10).max(1000).required().messages({
+    expectations: Joi.string().min(10).max(1000).optional().allow('').messages({
         'string.min': 'Ожидания должны содержать минимум 10 символов',
-        'string.max': 'Ожидания не должны превышать 1000 символов',
-        'any.required': 'Ожидания обязательны для заполнения'
+        'string.max': 'Ожидания не должны превышать 1000 символов'
     }),
-    budget: Joi.string().min(3).max(100).required().messages({
+    budget: Joi.string().min(3).max(100).optional().allow('').messages({
         'string.min': 'Бюджет должен содержать минимум 3 символа',
-        'string.max': 'Бюджет не должен превышать 100 символов',
-        'any.required': 'Бюджет обязателен для заполнения'
+        'string.max': 'Бюджет не должен превышать 100 символов'
     }),
-    name: Joi.string().min(2).max(100).required().messages({
+    name: Joi.string().min(2).max(100).optional().allow('').messages({
         'string.min': 'Имя должно содержать минимум 2 символа',
-        'string.max': 'Имя не должно превышать 100 символов',
-        'any.required': 'Имя обязательно для заполнения'
+        'string.max': 'Имя не должно превышать 100 символов'
     }),
-    company: Joi.string().min(2).max(200).required().messages({
+    company: Joi.string().min(2).max(200).optional().allow('').messages({
         'string.min': 'Название компании должно содержать минимум 2 символа',
-        'string.max': 'Название компании не должно превышать 200 символов',
-        'any.required': 'Название компании обязательно для заполнения'
+        'string.max': 'Название компании не должно превышать 200 символов'
     }),
-    phone: Joi.string().pattern(/^[\+]?[0-9\s\-\(\)]{10,}$/).required().messages({
-        'string.pattern.base': 'Введите корректный номер телефона',
-        'any.required': 'Телефон обязателен для заполнения'
+    phone: Joi.string().min(10).pattern(/^[\+]?[0-9\s\-\(\)]{10,}$/).optional().allow('').messages({
+        'string.min': 'Номер телефона должен содержать минимум 10 цифр',
+        'string.pattern.base': 'Введите корректный номер телефона'
     }),
-    email: Joi.string().email({ tlds: { allow: false } }).required().messages({
-        'string.email': 'Введите корректный email адрес',
-        'any.required': 'Email обязателен для заполнения'
+    email: Joi.string().email({ tlds: { allow: false } }).optional().allow('').messages({
+        'string.email': 'Введите корректный email адрес'
     }),
-    privacyAccepted: Joi.boolean().optional().default(false),
+    privacyAccepted: Joi.alternatives().try(
+        Joi.boolean(),
+        Joi.string().valid('true', 'false', '1', '0'),
+        Joi.string().empty('').default(false)
+    ).optional().default(false).custom((value) => {
+        if (typeof value === 'boolean') return value
+        if (typeof value === 'string') {
+            return value === 'true' || value === '1' || value === 'yes'
+        }
+        return false
+    }),
+    attachedFile: Joi.any().optional(), // File object from multer
     // Anti-bot fields
-    honeypot: Joi.string().allow('', null),
-    formStartedAt: Joi.number().integer().min(0)
+    honeypot: Joi.string().allow('', null).optional(),
+    formStartedAt: Joi.alternatives().try(
+        Joi.number().integer().min(0),
+        Joi.string().pattern(/^\d+$/).custom((value) => Number(value))
+    ).optional()
 })
 
 // Contact form validation schema
@@ -317,11 +323,31 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 
 // Anti-bot guard
 export const antibotGuard = (req: Request, res: Response, next: NextFunction) => {
+    // В режиме разработки и на staging полностью отключаем антибот-проверку
+    const nodeEnv = process.env.NODE_ENV || 'development'
+    if (nodeEnv !== 'production') {
+        console.log('🔓 Anti-bot guard disabled in', nodeEnv, 'mode')
+        return next()
+    }
+
     const { honeypot, formStartedAt } = req.body || {}
 
-    // Check honeypot field
-    if (honeypot && String(honeypot).trim() !== '') {
-        return res.status(400).json({ success: false, message: 'Bot detected' })
+    // Check honeypot field - only trigger if it has meaningful content
+    // Ignore empty strings, whitespace, or common autofill values
+    const honeypotValue = String(honeypot || '').trim()
+
+    // Список значений, которые считаются безопасными (автозаполнение браузера и т.д.)
+    const safeValues = ['', 'undefined', 'null', 'false', '0', 'true', '1', 'yes', 'no']
+
+    // Only flag as bot if honeypot has actual suspicious content
+    // Проверяем, что значение не пустое И не входит в список безопасных значений
+    if (honeypotValue && honeypotValue.length > 0 && !safeValues.includes(honeypotValue.toLowerCase())) {
+        // Дополнительная проверка: если значение похоже на реальный текст (больше 2 символов и содержит буквы)
+        const hasRealContent = honeypotValue.length > 2 && /[a-zA-Zа-яА-Я]/.test(honeypotValue)
+        if (hasRealContent) {
+            console.warn('⚠️ Bot detected - honeypot field filled with suspicious content:', honeypotValue)
+            return res.status(400).json({ success: false, message: 'Bot detected' })
+        }
     }
 
     // Check form submission time (only if formStartedAt is provided)
