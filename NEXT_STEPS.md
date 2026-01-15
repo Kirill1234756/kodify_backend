@@ -1,6 +1,7 @@
 # 🎯 Что делать дальше после входа на сервер
 
 ## ✅ Вы уже сделали:
+
 - ✅ Подключились к серверу через VNC
 - ✅ Вошли как `root`
 
@@ -54,24 +55,31 @@ cd ~/projects/it-company
 
 ### Шаг 4: Загрузить проект на сервер
 
-**Вариант A: Через SCP (с вашего Windows компьютера)**
+**Вариант A: Через Git (рекомендуется) - ваш репозиторий**
 
-На вашем компьютере (PowerShell):
+На сервере (в VNC терминале):
+
+```bash
+# Установить Git (если еще не установлен)
+apt install git -y
+
+# Перейти в директорию проектов
+cd ~/projects/it-company
+
+# Клонировать ваш репозиторий
+git clone https://github.com/Kirill1234756/kodify_backend.git backend
+
+# Перейти в директорию бэкенда
+cd backend
+```
+
+**Вариант B: Через SCP (альтернативный способ)**
+
+Если Git не работает, на вашем компьютере (PowerShell):
 
 ```powershell
 cd C:\Users\user\Desktop\it-company
 scp -r backend root@89.111.142.190:~/projects/it-company/
-```
-
-**Вариант B: Через Git (если есть репозиторий)**
-
-На сервере:
-
-```bash
-apt install git -y
-cd ~/projects/it-company
-git clone https://github.com/ваш-username/ваш-репозиторий.git .
-cd backend
 ```
 
 **Вариант C: Загрузка через веб-интерфейс или архив**
@@ -155,12 +163,14 @@ docker compose logs postgres
 ## 🔧 Если что-то пошло не так:
 
 **Ошибка при сборке:**
+
 ```bash
 docker compose logs
 # Проверьте логи и исправьте ошибки
 ```
 
 **Контейнеры не запускаются:**
+
 ```bash
 docker compose down
 docker compose up -d
@@ -168,6 +178,7 @@ docker compose logs -f
 ```
 
 **Проблемы с базой данных:**
+
 ```bash
 docker compose exec postgres psql -U kodify_user -d kodify_db
 ```
@@ -177,4 +188,3 @@ docker compose exec postgres psql -U kodify_user -d kodify_db
 ## 📚 Полная документация
 
 См. `DEPLOY_UBUNTU.md` для детальной инструкции со всеми опциями.
-
