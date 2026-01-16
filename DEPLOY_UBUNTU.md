@@ -317,12 +317,25 @@ sudo systemctl status nginx
 
 ### 6.2. Настройка конфигурации Nginx
 
+**Вариант A: Использовать готовый файл из репозитория (рекомендуется)**
+
+```bash
+# Копируем готовый конфигурационный файл
+sudo cp ~/projects/kodify/backend/nginx/kodify-backend.conf /etc/nginx/sites-available/kodify-backend
+
+# Или если нужно изменить server_name (для домена), отредактируйте файл:
+sudo nano /etc/nginx/sites-available/kodify-backend
+# Измените строку: server_name 89.111.142.190; на ваш домен
+```
+
+**Вариант B: Создать файл вручную**
+
 ```bash
 # Создаем конфигурационный файл
 sudo nano /etc/nginx/sites-available/kodify-backend
 ```
 
-Добавьте следующую конфигурацию:
+Скопируйте содержимое из файла `nginx/kodify-backend.conf` в репозитории или используйте следующую конфигурацию:
 
 ```nginx
 upstream backend {
@@ -331,7 +344,7 @@ upstream backend {
 
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name 89.111.142.190;  # Замените на ваш домен, если есть
 
     # Логи
     access_log /var/log/nginx/kodify-backend-access.log;

@@ -17,6 +17,7 @@ ssh root@ваш_домен.com
 ```
 
 После подключения обновите систему:
+
 ```bash
 sudo apt update && sudo apt upgrade -y
 ```
@@ -105,6 +106,7 @@ cd it-company/backend
 ### Вариант B: Через SCP (с локального компьютера)
 
 На вашем локальном компьютере (Windows PowerShell):
+
 ```powershell
 # Перейдите в папку проекта
 cd C:\Users\user\Desktop\it-company
@@ -251,6 +253,7 @@ server {
 ```
 
 Активация конфигурации:
+
 ```bash
 # Создание символической ссылки
 sudo ln -s /etc/nginx/sites-available/kodify-backend /etc/nginx/sites-enabled/
@@ -347,6 +350,7 @@ pm2 restart kodify-backend
 ## 🔍 Решение проблем
 
 ### Порт 3000 уже занят
+
 ```bash
 # Проверка, какой процесс использует порт
 sudo lsof -i :3000
@@ -356,6 +360,7 @@ sudo kill -9 PID
 ```
 
 ### Проблемы с базой данных
+
 ```bash
 # Проверка статуса PostgreSQL
 sudo systemctl status postgresql
@@ -365,6 +370,7 @@ psql -U kodify_user -d kodify_db -h localhost
 ```
 
 ### Проблемы с правами доступа
+
 ```bash
 # Установка правильных прав на папку uploads
 sudo chmod -R 755 /var/www/it-company/backend/uploads
@@ -391,10 +397,7 @@ sudo chown -R $USER:$USER /var/www/it-company/backend/uploads
 ## 📞 Поддержка
 
 При возникновении проблем проверьте логи:
+
 - PM2: `pm2 logs kodify-backend`
 - Nginx: `sudo tail -f /var/log/nginx/error.log`
 - PostgreSQL: `sudo tail -f /var/log/postgresql/postgresql-*.log`
-
-
-
-

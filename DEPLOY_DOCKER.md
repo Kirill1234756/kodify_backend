@@ -64,12 +64,14 @@ cd backend
 **Вариант B: Через SCP (с локального ПК)**
 
 На вашем Windows компьютере:
+
 ```powershell
 cd C:\Users\user\Desktop\it-company
 scp -r backend root@ваш_IP:/var/www/it-company/
 ```
 
 На сервере:
+
 ```bash
 cd /var/www/it-company/backend
 ```
@@ -343,6 +345,7 @@ docker compose ps
 1. **Автозапуск при перезагрузке**: Docker Compose автоматически перезапускает контейнеры благодаря `restart: unless-stopped`
 
 2. **Бэкапы базы данных**:
+
 ```bash
 # Создание бэкапа
 docker compose exec postgres pg_dump -U kodify_user kodify_db > backup.sql
@@ -352,16 +355,14 @@ docker compose exec -T postgres psql -U kodify_user kodify_db < backup.sql
 ```
 
 3. **Обновление зависимостей**:
+
 ```bash
 docker compose build --no-cache
 docker compose up -d
 ```
 
 4. **Просмотр логов за последний час**:
+
 ```bash
 docker compose logs --since 1h backend
 ```
-
-
-
-

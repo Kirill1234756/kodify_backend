@@ -67,7 +67,3 @@ pm2 restart kodify-backend
 ```
 
 Полная инструкция в файле `DEPLOYMENT_GUIDE.md`
-
-
-
-
