@@ -9,6 +9,10 @@ export class EmailService {
      * Initialize email transporter
      */
     private static async getTransporter(): Promise<nodemailer.Transporter> {
+        if (!emailConfig.isConfigured) {
+            throw new Error('Email is not configured')
+        }
+
         if (!this.transporter) {
             this.transporter = nodemailer.createTransport(emailConfig.smtp)
 
@@ -32,6 +36,12 @@ export class EmailService {
         formData: any,
         formRecord: FormRecord
     ): Promise<void> {
+        // Skip if email is not configured
+        if (!emailConfig.isConfigured) {
+            console.log('Email not configured, skipping email notification')
+            return
+        }
+
         try {
             const transporter = await this.getTransporter()
 
@@ -76,6 +86,12 @@ export class EmailService {
         formData: any,
         formRecord: FormRecord
     ): Promise<void> {
+        // Skip if email is not configured
+        if (!emailConfig.isConfigured) {
+            console.log('Email not configured, skipping email notification')
+            return
+        }
+
         try {
             const transporter = await this.getTransporter()
 
@@ -154,6 +170,11 @@ export class EmailService {
      * Test email configuration
      */
     static async testEmailConfiguration(): Promise<boolean> {
+        if (!emailConfig.isConfigured) {
+            console.log('Email is not configured, test skipped')
+            return false
+        }
+
         try {
             const transporter = await this.getTransporter()
 

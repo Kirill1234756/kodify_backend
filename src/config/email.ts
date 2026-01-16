@@ -3,20 +3,26 @@ import dotenv from 'dotenv'
 // Load .env to ensure SMTP vars are present in dev
 dotenv.config()
 
+const isProduction = process.env.NODE_ENV === 'production'
+const isEmailConfigured = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.ADMIN_EMAIL)
+
 export const emailConfig = {
     // SMTP configuration
     smtp: {
-        host: process.env.SMTP_HOST!,
+        host: process.env.SMTP_HOST || '',
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: false, // true for 465, false for other ports
         auth: {
-            user: process.env.SMTP_USER!,
-            pass: process.env.SMTP_PASS!
+            user: process.env.SMTP_USER || '',
+            pass: process.env.SMTP_PASS || ''
         }
     },
 
     // Email addresses
-    adminEmail: process.env.ADMIN_EMAIL!,
+    adminEmail: process.env.ADMIN_EMAIL || '',
+
+    // Check if email is configured
+    isConfigured: isEmailConfigured,
 
     // Email templates
     templates: {
@@ -73,12 +79,16 @@ export const emailConfig = {
     }
 } as const
 
-// Validate configuration
-if (!emailConfig.smtp.host || !emailConfig.smtp.auth.user || !emailConfig.smtp.auth.pass) {
-    throw new Error(emailConfig.errors.SMTP_CONFIG_MISSING)
-}
-
-if (!emailConfig.adminEmail) {
-    throw new Error(emailConfig.errors.ADMIN_EMAIL_MISSING)
+// Validate configuration only if email is needed
+// In production, email is optional unless explicitly configured
+if (!isEmailConfigured) {
+    if (isProduction) {
+        // In production, log warning but don't crash
+        console.warn('⚠️  Email configuration is missing. Email notifications will be disabled.')
+        console.warn('   Set SMTP_HOST, SMTP_USER, SMTP_PASS, and ADMIN_EMAIL to enable email.')
+    } else {
+        // In development, only warn if email is actually used
+        console.warn('⚠️  Email configuration is missing. Email features will not work.')
+    }
 }
 
