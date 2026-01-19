@@ -212,10 +212,13 @@ vi .env
 # Server
 NODE_ENV=production
 PORT=3000
+
+# Frontend URL (основной домен фронтенда, используется для CORS)
+# Пример для этого проекта: https://kodifyweb.ru
 FRONTEND_URL=https://yourdomain.com
 FRONTEND_URLS=https://yourdomain.com,https://www.yourdomain.com
 
-# Database
+# Database (в Docker Compose используйте имя сервиса 'postgres')
 DB_HOST=postgres
 DB_PORT=5432
 DB_NAME=kodify_db
@@ -223,8 +226,10 @@ DB_USER=kodify_user
 DB_PASSWORD=your_secure_password_here
 
 # File Storage
-UPLOAD_DIR=./uploads
+# URL для доступа к загруженным файлам (API домен)
+# Пример для этого проекта: https://api.kodifyweb.ru
 PUBLIC_URL=https://yourdomain.com
+UPLOAD_DIR=./uploads
 
 # Email (если используется)
 SMTP_HOST=smtp.gmail.com
@@ -403,14 +408,18 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### 6.4. Настройка SSL с Let's Encrypt (HTTPS)
+### 6.4. Настройка SSL с Let's Encryptapфзе (HTTPS)
 
 ```bash
 # Устанавливаем Certbot
 sudo apt install -y certbot python3-certbot-nginx
 
-# Получаем SSL сертификат
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+# Получаем SSL сертификат для API поддомена
+# Пример для этого проекта: api.kodifyweb.ru
+sudo certbot --nginx -d api.yourdomain.com
+
+# Или для основного домена и www:
+# sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
 # Certbot автоматически настроит Nginx для HTTPS
 # Сертификат будет автоматически обновляться

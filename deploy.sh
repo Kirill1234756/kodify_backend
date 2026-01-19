@@ -109,4 +109,3 @@ info "Для просмотра логов используйте: docker compos
 info "Для остановки используйте: docker compose down"
 
 
-

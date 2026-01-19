@@ -85,9 +85,7 @@ export const formRateLimit = createRateLimit({
     windowMs: 60 * 1000, // 1 minute
     max: 10,
     message: 'Too many form submissions, please try again later'
-})
-
-// Strict rate limit for suspicious activity: 3 requests per minute
+})// Strict rate limit for suspicious activity: 3 requests per minute
 export const strictRateLimit = createRateLimit({
     windowMs: 60 * 1000, // 1 minute
     max: 3,

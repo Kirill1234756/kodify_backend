@@ -79,7 +79,8 @@ cd backend
 
 ```powershell
 cd C:\Users\user\Desktop\it-company
-scp -r backend root@89.111.142.190:~/projects/it-company/
+# Замените 89.111.142.190 на ваш IP адрес сервера
+scp -r backend root@ваш_IP_адрес:~/projects/it-company/
 ```
 
 **Вариант C: Загрузка через веб-интерфейс или архив**
@@ -105,17 +106,21 @@ nano .env
 ```env
 NODE_ENV=production
 PORT=3000
-FRONTEND_URL=http://89.111.142.190:5173
-FRONTEND_URLS=http://89.111.142.190:5173
 
+# Frontend URL (основной домен фронтенда)
+FRONTEND_URL=https://kodifyweb.ru
+FRONTEND_URLS=https://kodifyweb.ru,http://kodifyweb.ru
+
+# Database (используется имя сервиса из docker-compose)
 DB_HOST=postgres
 DB_PORT=5432
 DB_NAME=kodify_db
 DB_USER=kodify_user
 DB_PASSWORD=сгенерируйте_сильный_пароль
 
+# File Storage (URL для доступа к загруженным файлам)
 UPLOAD_DIR=./uploads
-PUBLIC_URL=http://89.111.142.190
+PUBLIC_URL=https://api.kodifyweb.ru
 
 # Генерируйте пароль БД командой:
 # openssl rand -base64 32

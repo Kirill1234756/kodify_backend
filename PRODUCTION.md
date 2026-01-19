@@ -230,4 +230,3 @@ npm run dev
 - В production логируются только warn и error
 - Проверьте уровень логирования в `src/utils/logger.ts`
 
-
