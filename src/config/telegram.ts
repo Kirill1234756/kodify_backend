@@ -3,9 +3,15 @@ import dotenv from 'dotenv'
 // Load .env before reading bot token/chat id
 dotenv.config()
 
+const isProduction = process.env.NODE_ENV === 'production'
+const isTelegramConfigured = !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID)
+
 export const telegramConfig = {
-    botToken: process.env.TELEGRAM_BOT_TOKEN!,
+    botToken: process.env.TELEGRAM_BOT_TOKEN || '',
     chatId: String(process.env.TELEGRAM_CHAT_ID || ''), // Ensure it's a string
+
+    // Check if Telegram is configured
+    isConfigured: isTelegramConfigured,
 
     // Message templates
     templates: {
@@ -76,11 +82,16 @@ export const telegramConfig = {
     }
 } as const
 
-if (!telegramConfig.botToken) {
-    throw new Error(telegramConfig.errors.BOT_TOKEN_MISSING)
-}
-
-if (!telegramConfig.chatId) {
-    throw new Error(telegramConfig.errors.CHAT_ID_MISSING)
+// Validate configuration only if Telegram is needed
+// In production, Telegram is optional unless explicitly configured
+if (!isTelegramConfigured) {
+    if (isProduction) {
+        // In production, log warning but don't crash
+        console.warn('⚠️  Telegram configuration is missing. Telegram notifications will be disabled.')
+        console.warn('   Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to enable Telegram notifications.')
+    } else {
+        // In development, only warn if Telegram is actually used
+        console.warn('⚠️  Telegram configuration is missing. Telegram features will not work.')
+    }
 }
 

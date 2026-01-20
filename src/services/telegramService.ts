@@ -8,7 +8,11 @@ export class TelegramService {
     /**
      * Initialize Telegram bot
      */
-    private static getBot(): TelegramBot {
+    private static getBot(): TelegramBot | null {
+        if (!telegramConfig.isConfigured) {
+            console.warn('⚠️  Telegram is not configured. Skipping Telegram notification.')
+            return null
+        }
         if (!this.bot) {
             this.bot = new TelegramBot(telegramConfig.botToken, { polling: false })
         }
@@ -24,6 +28,9 @@ export class TelegramService {
     ): Promise<void> {
         try {
             const bot = this.getBot()
+            if (!bot) {
+                return // Telegram not configured, skip silently
+            }
 
             // Format file info if present
             const fileInfo = formData.attachedFile?.url || (formRecord as any).attached_file_url
@@ -77,6 +84,9 @@ export class TelegramService {
     ): Promise<void> {
         try {
             const bot = this.getBot()
+            if (!bot) {
+                return // Telegram not configured, skip silently
+            }
 
             const message = telegramConfig.templates.contactForm
                 .replace(/{name}/g, TelegramService.escapeHtml(formData.name || ''))
@@ -121,6 +131,9 @@ export class TelegramService {
     ): Promise<void> {
         try {
             const bot = this.getBot()
+            if (!bot) {
+                return // Telegram not configured, skip silently
+            }
 
             // Маппинг типов сайтов
             const siteTypeMap: Record<string, string> = {
@@ -267,7 +280,14 @@ export class TelegramService {
      */
     static async testBotConfiguration(): Promise<boolean> {
         try {
+            if (!telegramConfig.isConfigured) {
+                return false // Telegram not configured
+            }
+            
             const bot = this.getBot()
+            if (!bot) {
+                return false
+            }
 
             const chatId = String(telegramConfig.chatId)
             if (!chatId) {
