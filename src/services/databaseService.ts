@@ -382,7 +382,7 @@ export class DatabaseService {
             return false
         } finally {
             if (client) {
-                client.release()
+            client.release()
             }
         }
     }
