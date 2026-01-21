@@ -1,22 +1,21 @@
 # Production Environment Configuration
-# Скопируйте этот файл в .env и заполните реальными значениями
+# Скопируйте этот файл в .env на сервере: cp ENV_PRODUCTION_EXAMPLE.txt .env
 
 # Server Configuration
-PORT=3000
 NODE_ENV=production
+PORT=3000
 
 # Frontend URL (основной домен фронтенда, используется для CORS)
 FRONTEND_URL=https://kodifyweb.ru
-# Можно указать несколько доменов через запятую
-FRONTEND_URLS=https://kodifyweb.ru,http://kodifyweb.ru
+FRONTEND_URLS=https://kodifyweb.ru,https://www.kodifyweb.ru
 
 # Database Configuration (PostgreSQL)
 # В Docker Compose используйте имя сервиса 'postgres' как DB_HOST
 DB_HOST=postgres
 DB_PORT=5432
 DB_NAME=kodify_db
-DB_USER=kodify_user
-DB_PASSWORD=your_secure_password_here
+DB_USER=postgres
+DB_PASSWORD=postgres
 
 # File Storage Configuration
 # URL для доступа к загруженным файлам (API домен)
@@ -24,15 +23,15 @@ UPLOAD_DIR=./uploads
 PUBLIC_URL=https://api.kodifyweb.ru
 
 # Email Configuration (SMTP) - опционально
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
-ADMIN_EMAIL=admin@kodifyweb.ru
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USER=your_email@gmail.com
+# SMTP_PASS=your_app_password
+# ADMIN_EMAIL=admin@kodifyweb.ru
 
-# Telegram Bot Configuration - опционально
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-TELEGRAM_CHAT_ID=your_telegram_chat_id
+# Telegram Bot Configuration
+TELEGRAM_BOT_TOKEN=8226522901:AAHJSZ8zpZ-UCSX4OTmKb_bLbl2FwTgzGyA
+TELEGRAM_CHAT_ID=-1003136896464
 
 # Bitrix24 Configuration (optional)
 # Use webhook method (preferred)
