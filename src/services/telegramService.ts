@@ -237,6 +237,10 @@ export class TelegramService {
     static async sendMessage(message: string): Promise<void> {
         try {
             const bot = this.getBot()
+            if (!bot) {
+                console.warn('⚠️  Telegram bot is not configured. Skipping message.')
+                return
+            }
 
             const chatId = String(telegramConfig.chatId)
             if (!chatId) {
@@ -263,6 +267,10 @@ export class TelegramService {
     ): Promise<void> {
         try {
             const bot = this.getBot()
+            if (!bot) {
+                console.warn('⚠️  Telegram bot is not configured. Skipping file upload.')
+                return
+            }
 
             await bot.sendDocument(telegramConfig.chatId, filePath, {
                 caption: caption || 'Прикрепленный файл из заявки'
@@ -322,6 +330,9 @@ export class TelegramService {
     static async getBotInfo(): Promise<any> {
         try {
             const bot = this.getBot()
+            if (!bot) {
+                throw new Error('Telegram bot is not configured')
+            }
             return await bot.getMe()
         } catch (error) {
             console.error('Error getting bot info:', error)
