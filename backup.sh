@@ -32,7 +32,7 @@ fi
 echo -e "${YELLOW}📦 Backing up database...${NC}"
 
 DB_NAME="${DB_NAME:-kodify_db}"
-DB_USER="${DB_USER:-postgres}"
+DB_USER="${DB_USER:-kodify_user}"
 DB_HOST="${DB_HOST:-postgres}"
 
 # Create database dump
