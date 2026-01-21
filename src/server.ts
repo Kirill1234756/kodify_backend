@@ -186,7 +186,35 @@ app.use('/api/client-form', clientFormRoutes)
 app.use('/api/contact-form', contactFormRoutes)
 app.use('/api/calculator-form', calculatorRoutes)
 
-// Test endpoints for services (only in development)
+// Test endpoints for services (available in both dev and production for diagnostics)
+app.get('/api/test/telegram', async (req, res) => {
+    try {
+        const result = await TelegramService.testBotConfiguration()
+        res.json({
+            success: result,
+            message: result ? 'Telegram bot is working' : 'Telegram bot configuration failed'
+        })
+    } catch (error: any) {
+        const errorDetails: any = {
+            message: error?.message || 'Unknown error',
+            code: error?.code,
+            description: error?.description
+        }
+
+        // Try to extract more details from Telegram API error
+        if (error?.response?.body) {
+            errorDetails.telegramResponse = error.response.body
+        }
+
+        res.status(500).json({
+            success: false,
+            message: 'Telegram test failed',
+            error: errorDetails
+        })
+    }
+})
+
+// Additional test endpoints (only in development)
 if (isDevelopment) {
     app.get('/api/test/email', async (req, res) => {
         try {
@@ -201,33 +229,6 @@ if (isDevelopment) {
                 success: false,
                 message: 'Email test failed',
                 error: errorInfo.message
-            })
-        }
-    })
-
-    app.get('/api/test/telegram', async (req, res) => {
-        try {
-            const result = await TelegramService.testBotConfiguration()
-            res.json({
-                success: result,
-                message: result ? 'Telegram bot is working' : 'Telegram bot configuration failed'
-            })
-        } catch (error: any) {
-            const errorDetails: any = {
-                message: error?.message || 'Unknown error',
-                code: error?.code,
-                description: error?.description
-            }
-
-            // Try to extract more details from Telegram API error
-            if (error?.response?.body) {
-                errorDetails.telegramResponse = error.response.body
-            }
-
-            res.status(500).json({
-                success: false,
-                message: 'Telegram test failed',
-                error: errorDetails
             })
         }
     })
