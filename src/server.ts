@@ -12,6 +12,7 @@ import { EmailService } from './services/emailService'
 import { TelegramService } from './services/telegramService'
 import { BitrixService } from './services/bitrixService'
 import { DatabaseService } from './services/databaseService'
+import { renderSeoCorePage } from './views/seo-core-ssr'
 import { STORAGE_CONFIG, pool } from './config/database'
 import { logger } from './utils/logger'
 import { handleError } from './utils/errors'
@@ -181,10 +182,248 @@ app.get('/health', (req, res) => {
     })
 })
 
+// SSR: SEO core page (server-rendered HTML)
+app.get('/seo-core', async (req, res) => {
+    try {
+        const page = Math.max(1, parseInt(String(req.query.page || 1), 10) || 1)
+        // Для SEO ядра по умолчанию показываем все строки (до 5000),
+        // чтобы таблица выглядела как единый Google Sheet.
+        const rawLimit = parseInt(String(req.query.limit || 5000), 10)
+        const limit = Math.max(1, Math.min(Number.isNaN(rawLimit) ? 5000 : rawLimit, 5000))
+        const path = req.query.path ? String(req.query.path).trim() : ''
+        const clusterId = req.query.clusterId ? String(req.query.clusterId).trim() : ''
+        const city = req.query.city ? String(req.query.city).trim() : ''
+        const intent = req.query.intent ? String(req.query.intent).trim() : ''
+        const freqBucket = req.query.freqBucket ? String(req.query.freqBucket).trim() : ''
+        const search = req.query.search ? String(req.query.search).trim() : ''
+
+        const [coreResult, pagesResult, clustersResult] = await Promise.all([
+            DatabaseService.getSeoCoreList({
+                page,
+                limit,
+                path: path || undefined,
+                clusterId: clusterId || undefined,
+                city: city || undefined,
+                intent: intent || undefined,
+                freqBucket: freqBucket || undefined,
+                search: search || undefined,
+            }),
+            DatabaseService.listSeoPages({ page: 1, limit: 500 }),
+            DatabaseService.listSeoClusters({ page: 1, limit: 500 }),
+        ])
+
+        const baseUrl = `${req.protocol}://${req.get('host') || 'localhost'}${req.path}`
+        const apiBase = `${req.protocol}://${req.get('host') || 'localhost'}`
+
+        const html = renderSeoCorePage({
+            rows: coreResult.data,
+            total: coreResult.total,
+            page,
+            limit,
+            pages: pagesResult.data.map((p) => ({ id: p.id, path: p.path })),
+            clusters: clustersResult.data.map((c) => ({ id: c.id, name: c.name })),
+            filters: { path, clusterId, city, intent, freqBucket, search },
+            baseUrl,
+            apiBase,
+        })
+
+        res.setHeader('Content-Type', 'text/html; charset=utf-8')
+        res.send(html)
+    } catch (error) {
+        logger.error('Error in GET /seo-core (SSR):', error)
+        res.status(500).send('<h1>Ошибка сервера</h1><p>Не удалось загрузить данные SEO ядра.</p>')
+    }
+})
+
 // API routes
 app.use('/api/client-form', clientFormRoutes)
 app.use('/api/contact-form', contactFormRoutes)
 app.use('/api/calculator-form', calculatorRoutes)
+
+// SEO API routes
+app.get('/api/seo/page', async (req, res) => {
+    try {
+        const path = String(req.query.path || '').trim()
+        const city = req.query.city ? String(req.query.city).trim() : undefined
+
+        if (!path) {
+            return res.status(400).json({
+                success: false,
+                message: 'Query parameter "path" is required'
+            })
+        }
+
+        const seoPage = await DatabaseService.getSeoPageByPath(path, city)
+
+        if (!seoPage) {
+            return res.status(404).json({
+                success: false,
+                message: 'SEO configuration not found for the given path',
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: seoPage,
+        })
+    } catch (error) {
+        logger.error('Error in /api/seo/page:', error)
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error while fetching SEO page',
+        })
+    }
+})
+
+app.get('/api/seo/keywords', async (req, res) => {
+    try {
+        const path = req.query.path ? String(req.query.path) : undefined
+        const clusterId = req.query.clusterId ? String(req.query.clusterId) : undefined
+        const intent = req.query.intent ? String(req.query.intent) : undefined
+        const freqBucket = req.query.freqBucket ? String(req.query.freqBucket) : undefined
+        const city = req.query.city ? String(req.query.city) : undefined
+        const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : undefined
+
+        if (!path && !clusterId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Either "path" or "clusterId" query parameter is required',
+            })
+        }
+
+        const result = await DatabaseService.getSeoKeywords({
+            path,
+            clusterId,
+            intent,
+            freqBucket,
+            city,
+            limit,
+        })
+
+        return res.status(200).json({
+            success: true,
+            data: result,
+        })
+    } catch (error) {
+        logger.error('Error in /api/seo/keywords:', error)
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error while fetching SEO keywords',
+        })
+    }
+})
+
+// --- SEO Admin API (simple REST for editing title/meta/H1 and cluster→page bindings) ---
+// Optional: protect with API key (e.g. X-Admin-Key header) or auth middleware
+
+app.get('/api/seo/pages', async (req, res) => {
+    try {
+        const page = req.query.page ? parseInt(String(req.query.page), 10) : undefined
+        const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : undefined
+        const result = await DatabaseService.listSeoPages({ page, limit })
+        return res.status(200).json({ success: true, data: result })
+    } catch (error) {
+        logger.error('Error in GET /api/seo/pages:', error)
+        return res.status(500).json({ success: false, message: 'Internal server error' })
+    }
+})
+
+app.get('/api/seo/pages/:id', async (req, res) => {
+    try {
+        const page = await DatabaseService.getSeoPageById(req.params.id)
+        if (!page) return res.status(404).json({ success: false, message: 'SEO page not found' })
+        return res.status(200).json({ success: true, data: page })
+    } catch (error) {
+        logger.error('Error in GET /api/seo/pages/:id:', error)
+        return res.status(500).json({ success: false, message: 'Internal server error' })
+    }
+})
+
+app.patch('/api/seo/pages/:id', async (req, res) => {
+    try {
+        const body = req.body || {}
+        const payload: {
+            title?: string
+            h1?: string
+            description?: string
+            h2_outline?: string[]
+            faq?: string[]
+            canonical_path?: string
+            og_image?: string
+            is_indexable?: boolean
+            noindex?: boolean
+        } = {}
+        if (body.title !== undefined) payload.title = String(body.title)
+        if (body.h1 !== undefined) payload.h1 = String(body.h1)
+        if (body.description !== undefined) payload.description = String(body.description)
+        if (Array.isArray(body.h2Outline)) payload.h2_outline = body.h2Outline
+        if (Array.isArray(body.faq)) payload.faq = body.faq
+        if (body.canonicalPath !== undefined) payload.canonical_path = String(body.canonicalPath)
+        if (body.ogImage !== undefined) payload.og_image = String(body.ogImage)
+        if (body.isIndexable !== undefined) payload.is_indexable = Boolean(body.isIndexable)
+        if (body.noindex !== undefined) payload.noindex = Boolean(body.noindex)
+
+        const updated = await DatabaseService.updateSeoPage(req.params.id, payload)
+        if (!updated) return res.status(404).json({ success: false, message: 'SEO page not found' })
+        return res.status(200).json({ success: true, data: updated })
+    } catch (error) {
+        logger.error('Error in PATCH /api/seo/pages/:id:', error)
+        return res.status(500).json({ success: false, message: 'Internal server error' })
+    }
+})
+
+app.get('/api/seo/clusters', async (req, res) => {
+    try {
+        const page = req.query.page ? parseInt(String(req.query.page), 10) : undefined
+        const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : undefined
+        const city = req.query.city ? String(req.query.city) : undefined
+        const seoPageId = req.query.seoPageId ? String(req.query.seoPageId) : undefined
+        const result = await DatabaseService.listSeoClusters({ page, limit, city, seoPageId })
+        return res.status(200).json({ success: true, data: result })
+    } catch (error) {
+        logger.error('Error in GET /api/seo/clusters:', error)
+        return res.status(500).json({ success: false, message: 'Internal server error' })
+    }
+})
+
+app.get('/api/seo/core', async (req, res) => {
+    try {
+        const page = req.query.page ? parseInt(String(req.query.page), 10) : undefined
+        const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : undefined
+        const path = req.query.path ? String(req.query.path).trim() || undefined : undefined
+        const clusterId = req.query.clusterId ? String(req.query.clusterId).trim() || undefined : undefined
+        const city = req.query.city ? String(req.query.city).trim() || undefined : undefined
+        const intent = req.query.intent ? String(req.query.intent).trim() || undefined : undefined
+        const freqBucket = req.query.freqBucket ? String(req.query.freqBucket).trim() || undefined : undefined
+        const search = req.query.search ? String(req.query.search).trim() || undefined : undefined
+        const result = await DatabaseService.getSeoCoreList({
+            page, limit, path, clusterId, city, intent, freqBucket, search
+        })
+        return res.status(200).json({ success: true, data: result })
+    } catch (error) {
+        logger.error('Error in GET /api/seo/core:', error)
+        return res.status(500).json({ success: false, message: 'Internal server error' })
+    }
+})
+
+app.patch('/api/seo/clusters/:id', async (req, res) => {
+    try {
+        const seoPageId = req.body?.seoPageId !== undefined
+            ? (req.body.seoPageId === null || req.body.seoPageId === ''
+                ? null
+                : String(req.body.seoPageId))
+            : undefined
+        if (seoPageId === undefined) {
+            return res.status(400).json({ success: false, message: 'Body "seoPageId" (or null to unassign) is required' })
+        }
+        const updated = await DatabaseService.updateClusterSeoPage(req.params.id, seoPageId)
+        if (!updated) return res.status(404).json({ success: false, message: 'Cluster not found' })
+        return res.status(200).json({ success: true, data: updated })
+    } catch (error) {
+        logger.error('Error in PATCH /api/seo/clusters/:id:', error)
+        return res.status(500).json({ success: false, message: 'Internal server error' })
+    }
+})
 
 // Test endpoints for services (available in both dev and production for diagnostics)
 app.get('/api/test/telegram', async (req, res) => {
@@ -295,6 +534,7 @@ let server: Server | null = null
 
 try {
     server = app.listen(PORT, () => {
+        console.log(`\n✅ Server running at http://localhost:${PORT}\n`)
         logger.info(`Server running on port ${PORT}`)
         logger.info(`Frontend URLs: ${FRONTEND_URLS.join(', ')}`)
         logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`)

@@ -1,9 +1,21 @@
 import { Pool, PoolConfig } from 'pg'
 import path from 'path'
+import fs from 'fs'
 import dotenv from 'dotenv'
 
 // Load environment variables first (before using them)
 dotenv.config()
+
+// When .env has DB_HOST=postgres (for Docker), use localhost if we're not in Docker (host can't resolve "postgres")
+let dbHost = process.env.DB_HOST || 'localhost'
+if (dbHost === 'postgres') {
+    const inDocker =
+        process.platform !== 'win32' && fs.existsSync('/.dockerenv')
+    if (!inDocker) {
+        dbHost = 'localhost'
+        console.log('📌 DB_HOST=postgres overridden to localhost (not running in Docker)')
+    }
+}
 
 // Ensure DB_PASSWORD is always a string (handle undefined, null, empty)
 const getDbPassword = (): string => {
@@ -17,7 +29,7 @@ const getDbPassword = (): string => {
 
 // PostgreSQL connection pool configuration
 const dbConfig: PoolConfig = {
-    host: process.env.DB_HOST || 'localhost',
+    host: dbHost,
     port: parseInt(process.env.DB_PORT || '5432'),
     database: process.env.DB_NAME || 'kodify_db',
     user: process.env.DB_USER || 'postgres',
@@ -51,6 +63,9 @@ export const TABLES = {
     CLIENT_FORMS: 'client_forms',
     CONTACT_FORMS: 'contact_forms',
     CALCULATOR_FORMS: 'calculator_forms',
+    SEO_PAGES: 'seo_pages',
+    SEO_CLUSTERS: 'seo_clusters',
+    SEO_KEYWORDS: 'seo_keywords',
 } as const
 
 // Form statuses

@@ -12,9 +12,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/migrations:/docker-entrypoint-initdb.d:ro
-    # Порт не пробрасываем наружу - доступ через Docker сеть
-    # ports:
-    #   - "5432:5432"
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-kodify_user}"]
       interval: 10s
@@ -34,14 +33,14 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      # Server
+      # Server (FRONTEND_URL нужен для CORS при вызове с localhost:5173)
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
-      FRONTEND_URL: ${FRONTEND_URL}
-      FRONTEND_URLS: ${FRONTEND_URLS}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      FRONTEND_URLS: ${FRONTEND_URLS:-http://localhost:5173}
       
-      # Database (используем имя сервиса из docker-compose)
-      DB_HOST: postgres
+      # Database: host.docker.internal = та же БД, что и seed/import на localhost:5432
+      DB_HOST: host.docker.internal
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-kodify_db}
       DB_USER: ${DB_USER:-kodify_user}
@@ -49,18 +48,18 @@ services:
       
       # File Storage
       UPLOAD_DIR: ./uploads
-      PUBLIC_URL: ${PUBLIC_URL}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
       
-      # Email
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
-      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      # Email (опционально)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       
-      # Telegram
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      # Telegram (опционально)
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
       
       # Bitrix24 (опционально)
       BITRIX24_WEBHOOK_URL: ${BITRIX24_WEBHOOK_URL:-}

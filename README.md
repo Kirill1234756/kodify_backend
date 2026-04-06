@@ -140,9 +140,11 @@ backend/
 ### Client Form (Детальная форма клиента)
 
 #### `POST /api/client-form`
+
 Отправка детальной формы клиента с возможностью прикрепления файла.
 
 **Параметры запроса:**
+
 ```json
 {
   "name": "Иван Иванов",
@@ -158,11 +160,13 @@ backend/
 ```
 
 **Файл (multipart/form-data):**
+
 - Поле: `attachedFile`
 - Максимальный размер: 10MB
 - Разрешенные типы: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG
 
 **Ответ:**
+
 ```json
 {
   "success": true,
@@ -177,20 +181,25 @@ backend/
 ```
 
 #### `GET /api/client-form/:id`
+
 Получение заявки по ID.
 
 #### `GET /api/client-form?page=1&limit=10&status=new`
+
 Получение всех заявок с пагинацией и фильтрацией по статусу.
 
 **Query параметры:**
+
 - `page` (number): Номер страницы (по умолчанию: 1)
 - `limit` (number): Количество записей на странице (по умолчанию: 10)
 - `status` (string, опционально): Фильтр по статусу (new, in_progress, completed, rejected)
 
 #### `PUT /api/client-form/:id/status`
+
 Обновление статуса заявки.
 
 **Тело запроса:**
+
 ```json
 {
   "status": "in_progress"
@@ -202,9 +211,11 @@ backend/
 ### Contact Form (Контактная форма)
 
 #### `POST /api/contact-form`
+
 Отправка контактной формы (упрощенная форма).
 
 **Параметры запроса:**
+
 ```json
 {
   "name": "Петр Петров",
@@ -216,12 +227,15 @@ backend/
 **Ответ:** Аналогичен Client Form
 
 #### `GET /api/contact-form/:id`
+
 Получение заявки по ID.
 
 #### `GET /api/contact-form?page=1&limit=10`
+
 Получение всех заявок с пагинацией.
 
 #### `PUT /api/contact-form/:id/status`
+
 Обновление статуса заявки.
 
 ---
@@ -229,9 +243,11 @@ backend/
 ### Calculator Form (Форма калькулятора)
 
 #### `POST /api/calculator-form`
+
 Отправка формы из калькулятора стоимости сайта.
 
 **Параметры запроса:**
+
 ```json
 {
   "name": "Сергей Сергеев",
@@ -256,9 +272,11 @@ backend/
 ### Health Check & Test Endpoints
 
 #### `GET /health`
+
 Проверка состояния сервера.
 
 **Ответ:**
+
 ```json
 {
   "status": "ok",
@@ -269,9 +287,11 @@ backend/
 ```
 
 #### `GET /api/test/telegram` (Production доступен)
+
 Тест подключения к Telegram боту.
 
 **Ответ:**
+
 ```json
 {
   "success": true,
@@ -280,12 +300,15 @@ backend/
 ```
 
 #### `GET /api/test/email` (только Development)
+
 Тест отправки email.
 
 #### `GET /api/test/bitrix` (только Development)
+
 Тест подключения к Bitrix24.
 
 #### `GET /api/test/database` (только Development)
+
 Тест подключения к базе данных.
 
 ---
@@ -380,6 +403,7 @@ BITRIX24_WEBHOOK_URL=https://your-domain.bitrix24.ru/rest/1/your_token/
 Управление данными в PostgreSQL.
 
 **Методы:**
+
 - `saveClientForm(data)`: Сохранение детальной формы
 - `saveContactForm(data)`: Сохранение контактной формы
 - `saveCalculatorForm(data)`: Сохранение формы калькулятора
@@ -393,12 +417,14 @@ BITRIX24_WEBHOOK_URL=https://your-domain.bitrix24.ru/rest/1/your_token/
 Отправка email уведомлений через SMTP.
 
 **Методы:**
+
 - `sendClientFormNotification(formData, formRecord)`: Уведомление о детальной форме
 - `sendContactFormNotification(formData, formRecord)`: Уведомление о контактной форме
 - `sendCalculatorFormNotification(formData, formRecord)`: Уведомление о калькуляторе
 - `testEmailConfiguration()`: Тест конфигурации
 
 **Особенности:**
+
 - Опционален в production (если не настроен, система не падает)
 - Поддержка HTML шаблонов
 - Логирование ошибок без прерывания работы
@@ -408,6 +434,7 @@ BITRIX24_WEBHOOK_URL=https://your-domain.bitrix24.ru/rest/1/your_token/
 Отправка уведомлений в Telegram.
 
 **Методы:**
+
 - `sendClientFormNotification(formData, formRecord)`: Уведомление о детальной форме
 - `sendContactFormNotification(formData, formRecord)`: Уведомление о контактной форме
 - `sendCalculatorFormNotification(formData, formRecord)`: Уведомление о калькуляторе
@@ -417,6 +444,7 @@ BITRIX24_WEBHOOK_URL=https://your-domain.bitrix24.ru/rest/1/your_token/
 - `getBotInfo()`: Получение информации о боте
 
 **Особенности:**
+
 - Опционален в production
 - Красивое форматирование сообщений с эмодзи
 - Поддержка отправки файлов
@@ -426,6 +454,7 @@ BITRIX24_WEBHOOK_URL=https://your-domain.bitrix24.ru/rest/1/your_token/
 Интеграция с Bitrix24 CRM.
 
 **Методы:**
+
 - `createLead(leadData)`: Создание лида в Bitrix24
 - `createClientFormLead(formData)`: Создание лида из детальной формы
 - `createContactFormLead(formData)`: Создание лида из контактной формы
@@ -433,6 +462,7 @@ BITRIX24_WEBHOOK_URL=https://your-domain.bitrix24.ru/rest/1/your_token/
 - `testConnection()`: Тест подключения
 
 **Особенности:**
+
 - Поддержка webhook и REST API методов
 - Автоматическое сопоставление полей форм с полями Bitrix24
 - Опционален в production
@@ -442,11 +472,13 @@ BITRIX24_WEBHOOK_URL=https://your-domain.bitrix24.ru/rest/1/your_token/
 Управление загруженными файлами.
 
 **Методы:**
+
 - `saveFile(file, formId)`: Сохранение файла
 - `getFileUrl(fileName)`: Получение URL файла
 - `deleteFile(fileName)`: Удаление файла
 
 **Особенности:**
+
 - Локальное хранение в `./uploads`
 - Валидация типов и размера файлов
 - Генерация уникальных имен файлов
@@ -493,6 +525,7 @@ docker-compose down -v
 Пример конфигурации Nginx для reverse proxy доступен в `nginx/kodify-backend.conf`.
 
 **Основные настройки:**
+
 - HTTPS с автоматическим редиректом HTTP → HTTPS
 - SSL сертификаты от Let's Encrypt
 - Проксирование запросов на backend:3000
@@ -506,10 +539,12 @@ docker-compose down -v
 ### Автоматические бекапы
 
 Система бекапов включена. Скрипты:
+
 - `backup.sh`: Создание бекапа базы данных и файлов
 - `restore.sh`: Восстановление из бекапа
 
 **Что бекапится:**
+
 - PostgreSQL база данных (полный SQL дамп)
 - Загруженные файлы (`./uploads`)
 
